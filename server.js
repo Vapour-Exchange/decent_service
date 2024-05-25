@@ -11,9 +11,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-app.use(auth);
+// app.use(auth);
 app.use("/swap", swapRouter);
 
 app.listen(config.port, () => {
-  logger.info(`[Server] : Server is running on http://localhost:${config.port}`);
+  logger.info(
+    `[Server] : Server is running on http://localhost:${config.port}`
+  );
 });

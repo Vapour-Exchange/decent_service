@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-
+import { ChainId } from "@uniswap/sdk-core";
 dotenv.config();
 
 const config = {
@@ -12,7 +12,12 @@ const config = {
   chainId: ChainId.BASE,
 };
 
-if (!config.jwtSecret || !config.chainJsonRpcUrl || !config.walletPrivKey || !config.walletAddress) {
+if (
+  !config.jwtSecret ||
+  !config.chainJsonRpcUrl ||
+  !config.walletPrivKey ||
+  !config.walletAddress
+) {
   throw new Error("Missing required environment variables");
 }
 

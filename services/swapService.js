@@ -1,7 +1,11 @@
-import { AlphaRouter, UniswapMulticallProvider, SwapType } from "@uniswap/smart-order-router";
+import {
+  AlphaRouter,
+  UniswapMulticallProvider,
+  SwapType,
+} from "@uniswap/smart-order-router";
 import { Percent, Token } from "@uniswap/sdk-core";
 import { ethers } from "ethers";
-import { ERC20_ABI } from "../lib";
+import { ERC20_ABI } from "../lib/index.js";
 import logger from "../logger.js";
 
 export function getSwapOptions(walletAddress) {
@@ -13,9 +17,31 @@ export function getSwapOptions(walletAddress) {
   };
 }
 
-export function createTokens(chainId, inputAddress, inputDecimal, inputSymbol, inputName, outputAddress, outputDecimal, outputSymbol, outputName) {
-  const inputToken = new Token(chainId, inputAddress, inputDecimal, inputSymbol, inputName);
-  const outputToken = new Token(chainId, outputAddress, outputDecimal, outputSymbol, outputName);
+export function createTokens(
+  chainId,
+  inputAddress,
+  inputDecimal,
+  inputSymbol,
+  inputName,
+  outputAddress,
+  outputDecimal,
+  outputSymbol,
+  outputName
+) {
+  const inputToken = new Token(
+    chainId,
+    inputAddress,
+    inputDecimal,
+    inputSymbol,
+    inputName
+  );
+  const outputToken = new Token(
+    chainId,
+    outputAddress,
+    outputDecimal,
+    outputSymbol,
+    outputName
+  );
 
   return { inputToken, outputToken };
 }
@@ -34,7 +60,10 @@ export function getRouter(chainId, provider) {
 
 export async function approveToken(wallet, tokenAddress, spender, amount) {
   const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
-  const tokenApprovalTx = await tokenContract.approve(spender, ethers.BigNumber.from(amount.toString()));
+  const tokenApprovalTx = await tokenContract.approve(
+    spender,
+    ethers.BigNumber.from(amount.toString())
+  );
   const tokenApprovalReceipt = await tokenApprovalTx.wait();
 
   if (tokenApprovalReceipt.status !== 1) {
