@@ -29,14 +29,14 @@ jobs:
       - name: Set Image Version 
         uses: massdriver-cloud/actions/app_patch@v4
         with:
-          project: <insert-project-abbreviation-here>
-          env: <insert-environment-abbreviation-here>
-          manifest: <insert-manifest-abbreviation-here>
+          project: decents
+          env: prod
+          manifest: decentservic
           set: |
             <insert-image-tag-path> = "${{ github.sha }}"
       - name: Deploy App
         uses: massdriver-cloud/actions/app_deploy@v4
         with:
-          project: <insert-project-abbreviation-here>
-          env: <insert-environment-abbreviation-here>
-          manifest: <insert-manifest-abbreviation-here>
+          project: decents
+          env: prod
+          manifest: decentservic
