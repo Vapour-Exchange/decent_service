@@ -22,18 +22,18 @@ jobs:
           region: ${{ vars.REGION }}
           image-tag: ${{ github.sha }}
           build-context: ./ # path to Dockerfile
-      - name: Publish Bundle 
+      - name: Publish Bundle
         uses: massdriver-cloud/actions/bundle_publish@v4
         with:
           build-directory: ./massdriver # path to massdriver config directory, contains massdriver.yaml
-      - name: Set Image Version 
+      - name: Set Image Version
         uses: massdriver-cloud/actions/app_patch@v4
         with:
           project: decents
           env: prod
           manifest: decentservic
           set: |
-            <insert-image-tag-path> = "${{ github.sha }}"
+            application.image.tag. = "${{ github.sha }}"
       - name: Deploy App
         uses: massdriver-cloud/actions/app_deploy@v4
         with:
