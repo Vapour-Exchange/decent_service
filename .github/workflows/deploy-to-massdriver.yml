@@ -33,7 +33,7 @@ jobs:
           env: prod
           manifest: decentservic
           set: |
-            application.image.tag = "${{ github.sha }}"
+            params.image.tag = "${{ github.sha }}"
       - name: Deploy App
         uses: massdriver-cloud/actions/app_deploy@v4
         with:
