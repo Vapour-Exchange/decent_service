@@ -8,7 +8,7 @@ const logger = winston.createLogger({
       return `${timestamp} ${level}: ${message}`;
     })
   ),
-  transports: [new winston.transports.File({ filename: "logs.txt" })],
+  transports: [new winston.transports.Console()],
 });
 
 logger.stream = {

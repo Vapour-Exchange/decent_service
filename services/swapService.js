@@ -70,7 +70,7 @@ export async function approveToken(wallet, tokenAddress, spender, amount) {
     throw new Error("Token approval transaction failed");
   }
 
-  logger.debug("Token approved successfully", { txHash: tokenApprovalTx.hash });
+  logger.info("Token approved successfully", { txHash: tokenApprovalTx.hash });
 }
 
 export async function performSwap(wallet, route) {
@@ -100,5 +100,5 @@ export async function performSwap(wallet, route) {
     throw new Error("Swap transaction failed");
   }
 
-  logger.debug("Swap transaction successful", { txHash: txRes.hash });
+  logger.info("Swap transaction successful", { txHash: txRes.hash });
 }

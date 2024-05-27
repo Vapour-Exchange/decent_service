@@ -27,7 +27,7 @@ const provider = new ethers.providers.JsonRpcProvider(
 const wallet = new ethers.Wallet(config.walletPrivKey, provider);
 
 router.post("/swap", async (req, res) => {
-  logger.debug("Request body:", req.body);
+  logger.info("Request body:", req.body);
 
   try {
     const {
@@ -57,17 +57,34 @@ router.post("/swap", async (req, res) => {
       tokenOutputSymbol,
       tokenOutputName
     );
+
+    logger.info(
+      `Tokens Created: ,
+      ${JSON.stringify(inputToken)},
+      ${JSON.stringify(outputToken)}`
+    );
+
     const inputAmountInWei = createAmountInWei(
-      tokenInputAmount,
+      tokenInputAmount.toString(),
       tokenInputDecimal
     );
+
+    logger.info(`Input Amount in Wei ${inputAmountInWei}`);
+
     const wethAmount = CurrencyAmount.fromRawAmount(
       inputToken,
       JSBI.BigInt(inputAmountInWei.toString())
     );
+    logger.info(`Input Amount Parsed in Weth ${wethAmount}`);
+
     const options = getSwapOptions(config.walletAddress);
 
+    logger.info(`Swap Router options ${JSON.stringify(options)}`);
+
     const alphaRouter = getRouter(config.chainId, provider);
+
+    logger.info(`Aplha Router initialized`);
+
     const route = await alphaRouter.route(
       wethAmount,
       outputToken,
@@ -78,6 +95,8 @@ router.post("/swap", async (req, res) => {
     if (!route) {
       throw new Error("No route found for the swap");
     }
+
+    logger.info(`Route found, ${JSON.stringify(route)}`);
 
     await approveToken(
       wallet,
