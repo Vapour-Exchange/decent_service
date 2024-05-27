@@ -17,6 +17,9 @@ logger.stream = {
     logger.info(message.trim());
   },
 };
-const options = {};
-logger.add(new NewrelicTransport(options));
+if (process.env.Env != "DEV") {
+  const options = {};
+  logger.add(new NewrelicTransport(options));
+}
+
 export default logger;

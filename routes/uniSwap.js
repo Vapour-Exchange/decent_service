@@ -106,10 +106,12 @@ router.post("/swap", async (req, res) => {
     );
     await performSwap(wallet, route);
 
-    res.json({});
+    res.json(route);
   } catch (error) {
     logger.error("Error in swap process:", error);
-    res.status(500).json({ error: "Failed to execute the swap" });
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to execute the swap" });
   }
 });
 
