@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
-    "@uniswap/sdk-core": "4.2.0",
-    "@uniswap/smart-order-router": "3.28.8",
-    "@uniswap/v3-sdk": "3.11.0",
+    "@uniswap/sdk-core": "^4.2.0",
+    "@uniswap/smart-order-router": "^3.28.8",
+    "@uniswap/v3-sdk": "^3.11.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "ethers": "5.7.2",
