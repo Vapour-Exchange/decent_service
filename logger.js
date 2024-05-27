@@ -1,4 +1,5 @@
 import winston from "winston";
+import NewrelicTransport from "winston-newrelic-agent-transport";
 
 const logger = winston.createLogger({
   level: "info",
@@ -16,5 +17,6 @@ logger.stream = {
     logger.info(message.trim());
   },
 };
-
+const options = {};
+logger.add(new NewrelicTransport(options));
 export default logger;

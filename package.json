@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@types/cors": "^2.8.17",
+    "@uniswap/router-sdk": "1.7.1",
     "@uniswap/sdk-core": "^4.2.0",
     "@uniswap/smart-order-router": "^3.28.8",
     "@uniswap/v3-sdk": "^3.11.0",
@@ -27,7 +28,7 @@
     "jsonwebtoken": "^9.0.2",
     "newrelic": "^11.17.0",
     "winston": "^3.13.0",
-    "@uniswap/router-sdk": "1.7.1"
+    "winston-newrelic-agent-transport": "^1.0.5"
   },
   "scripts": {
     "start": "NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED=true NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED=10000 NEW_RELIC_LOG_ENABLED=true NEW_RELIC_APP_NAME=decent-service NEW_RELIC_LICENSE_KEY=356e438580601e137d827e4c8bd3ca14FFFFNRAL node -r newrelic server.js",
