@@ -97,7 +97,7 @@ router.post("/swap", async (req, res) => {
     }
 
     logger.info(`Route found, ${JSON.stringify(route)}`);
-    const swapResponse = await performSwap(wallet, route, estimatedGasUsed);
+    const swapResponse = await performSwap(wallet, route);
     res.status(200).json(swapResponse);
   } catch (error) {
     logger.error("Error in swap process:", error);
