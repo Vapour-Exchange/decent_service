@@ -84,6 +84,8 @@ export async function performSwap(wallet, route) {
     value: ethers.BigNumber.from(route.methodParameters.value),
   });
 
+  console.log(gasEstimate);
+
   const txRes = await wallet.sendTransaction({
     data: route.methodParameters.calldata,
     to: route.methodParameters.to,
@@ -102,5 +104,5 @@ export async function performSwap(wallet, route) {
 
   logger.info("Swap transaction successful", { txHash: txRes.hash });
 
-  return { status: swapReceipt.status !== 1 ? false : true, txRes };
+  return { success: swapReceipt.status !== 1 ? false : true, swapReceipt };
 }
