@@ -193,7 +193,7 @@ router.post("/approve-max", async (req, res) => {
   }
 });
 
-router.get("/quote", async (req, res) => {
+router.post("/quote", async (req, res) => {
   logger.info("Request body:", req.body);
 
   try {
@@ -265,12 +265,10 @@ router.get("/quote", async (req, res) => {
 
     logger.info(`Route found, ${JSON.stringify(route.quote.toFixed(10))}`);
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        data: { price: route.quote.toFixed(10), min: 1 },
-      });
+    res.status(200).json({
+      success: true,
+      data: { price: route.quote.toFixed(10), min: 1 },
+    });
   } catch (error) {
     logger.error("Error in swap process:", error);
     res
