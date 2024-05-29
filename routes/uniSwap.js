@@ -101,7 +101,7 @@ router.post("/swap", async (req, res) => {
     res.status(200).json(swapResponse);
   } catch (error) {
     logger.error("Error in swap process:", error);
-    res.status(500).json({ success: false, error: error });
+    res.status(500).json({ success: false, errors: error });
   }
 });
 
@@ -189,7 +189,7 @@ router.post("/approve-max", async (req, res) => {
     logger.error("Error in swap process:", error);
     res
       .status(500)
-      .json({ success: false, error: "Failed to execute the swap" });
+      .json({ success: false, errors: "Failed to execute the swap" });
   }
 });
 
