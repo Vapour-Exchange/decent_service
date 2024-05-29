@@ -272,7 +272,7 @@ router.get("/quote", async (req, res) => {
     logger.error("Error in swap process:", error);
     res
       .status(500)
-      .json({ success: false, error: "Failed to execute the swap" });
+      .json({ success: false, errors: "Failed to execute the swap" });
   }
 });
 
