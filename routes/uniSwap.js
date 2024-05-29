@@ -267,7 +267,10 @@ router.get("/quote", async (req, res) => {
 
     res
       .status(200)
-      .json({ success: true, data: { amount: route.quote.toFixed(10) } });
+      .json({
+        success: true,
+        data: { price: route.quote.toFixed(10), min: 1 },
+      });
   } catch (error) {
     logger.error("Error in swap process:", error);
     res
