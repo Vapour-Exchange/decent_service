@@ -104,5 +104,8 @@ export async function performSwap(wallet, route) {
 
   logger.info("Swap transaction successful", { txHash: txRes.hash });
 
-  return { success: swapReceipt.status !== 1 ? false : true, swapReceipt };
+  return {
+    success: swapReceipt.status !== 1 ? false : true,
+    data: { receipt: swapReceipt, transaction: txRes },
+  };
 }

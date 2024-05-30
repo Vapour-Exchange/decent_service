@@ -184,7 +184,7 @@ router.post("/approve-max", async (req, res) => {
       inputAmountInWei
     );
 
-    res.json(route);
+    res.status(200).json(route);
   } catch (error) {
     logger.error("Error in swap process:", error);
     res
