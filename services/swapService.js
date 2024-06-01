@@ -58,6 +58,51 @@ export function getRouter(chainId, provider) {
   });
 }
 
+function removeLeadingZeros(address) {
+  const strippedAddress = address.startsWith("0x") ? address.slice(2) : address;
+  const nonZeroIndex = strippedAddress.search(/[1-9a-f]/);
+  const response = "0x" + strippedAddress.slice(nonZeroIndex);
+  return response.toLowerCase();
+}
+
+function getAmountFromTransaction(receipt, decimals) {
+  const logs = receipt.logs;
+  const wallet = ethers.utils.getAddress(receipt.from).toLowerCase();
+  const router = ethers.utils.getAddress(receipt.to).toLowerCase();
+
+  console.log(wallet, router);
+  const amountLog = logs.find((log) => {
+    console.log(
+      log.topics[0],
+      removeLeadingZeros(log.topics[2]),
+      wallet,
+      removeLeadingZeros(log.topics[2]) === wallet,
+      removeLeadingZeros(log.topics[1]),
+      router,
+      removeLeadingZeros(log.topics[1]) !== router
+    );
+    return (
+      log.topics[0] ==
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" &&
+      removeLeadingZeros(log.topics[2]) == wallet &&
+      removeLeadingZeros(log.topics[1]) != router
+    );
+  });
+
+  console.log(amountLog);
+  if (amountLog) {
+    const amountInBigNumber = ethers.BigNumber.from(amountLog.data);
+    const formattedAmount = ethers.utils.formatUnits(
+      amountInBigNumber,
+      decimals
+    );
+    return formattedAmount;
+  } else {
+    console.log("No relevant log found");
+    return 0; // Return 0 or handle this case as needed
+  }
+}
+
 export async function approveToken(wallet, tokenAddress, spender, amount) {
   const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
   const tokenApprovalTx = await tokenContract.approve(
@@ -73,7 +118,7 @@ export async function approveToken(wallet, tokenAddress, spender, amount) {
   logger.info("Token approved successfully", { txHash: tokenApprovalTx.hash });
 }
 
-export async function performSwap(wallet, route) {
+export async function performSwap(wallet, route, decimals) {
   const gasPrice = await wallet.provider.getGasPrice();
   const maxFeePerGas = gasPrice.mul(2);
   const maxPriorityFeePerGas = gasPrice.mul(2);
@@ -97,15 +142,16 @@ export async function performSwap(wallet, route) {
   });
 
   const swapReceipt = await txRes.wait();
+  let amount = 0;
 
-  if (swapReceipt.status !== 1) {
-    throw new Error("Swap transaction failed");
+  if (swapReceipt.status === 1) {
+    amount = getAmountFromTransaction(swapReceipt, decimals);
   }
 
   logger.info("Swap transaction successful", { txHash: txRes.hash });
 
   return {
     success: swapReceipt.status !== 1 ? false : true,
-    data: { receipt: swapReceipt, transaction: txRes },
+    data: { receipt: swapReceipt, transaction: txRes, amount: amount },
   };
 }
