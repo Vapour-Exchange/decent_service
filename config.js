@@ -10,6 +10,8 @@ const config = {
   walletAddress: process.env.WALLET_ADDRESS,
   userHeader: "user.wallet",
   chainId: ChainId.BASE,
+  networkFees: 0.003,
+  platformFees: 0.003,
 };
 
 if (
