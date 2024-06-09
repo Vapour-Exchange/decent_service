@@ -2,11 +2,15 @@ import {
   AlphaRouter,
   UniswapMulticallProvider,
   SwapType,
+  OnChainQuoteProvider,
 } from "@uniswap/smart-order-router";
 import { Percent, Token } from "@uniswap/sdk-core";
 import { ethers } from "ethers";
 import { ERC20_ABI } from "../lib/index.js";
 import logger from "../logger.js";
+
+export const MAX_FEE_PER_GAS = 100000000000;
+export const MAX_PRIORITY_FEE_PER_GAS = 100000000000;
 
 export function getSwapOptions(walletAddress) {
   return {
@@ -51,10 +55,32 @@ export function createAmountInWei(amount, decimal) {
 }
 
 export function getRouter(chainId, provider) {
+  const multicall2Provider = new UniswapMulticallProvider(chainId, provider);
   return new AlphaRouter({
     chainId,
     provider,
-    multicall2Provider: new UniswapMulticallProvider(chainId, provider),
+    multicall2Provider: multicall2Provider,
+    onChainQuoteProvider: new OnChainQuoteProvider(
+      chainId,
+      provider,
+      multicall2Provider,
+      {
+        retries: 2,
+        minTimeout: 100,
+        maxTimeout: 1000,
+      },
+      () => {
+        return {
+          multicallChunk: 210,
+          gasLimitPerCall: 705_000,
+          quoteMinSuccessRate: 0.15,
+        };
+      },
+      {
+        gasLimitOverride: 2_000_000,
+        multicallChunk: 70,
+      }
+    ),
   });
 }
 
@@ -70,17 +96,8 @@ function getAmountFromTransaction(receipt, decimals) {
   const wallet = ethers.utils.getAddress(receipt.from).toLowerCase();
   const router = ethers.utils.getAddress(receipt.to).toLowerCase();
 
-  console.log(wallet, router);
+  console.log(wallet, router, logs);
   const amountLog = logs.find((log) => {
-    console.log(
-      log.topics[0],
-      removeLeadingZeros(log.topics[2]),
-      wallet,
-      removeLeadingZeros(log.topics[2]) === wallet,
-      removeLeadingZeros(log.topics[1]),
-      router,
-      removeLeadingZeros(log.topics[1]) !== router
-    );
     return (
       log.topics[0] ==
         "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" &&
@@ -120,17 +137,20 @@ export async function approveToken(wallet, tokenAddress, spender, amount) {
 
 export async function performSwap(wallet, route, decimals) {
   const gasPrice = await wallet.provider.getGasPrice();
-  const maxFeePerGas = gasPrice.mul(2);
-  const maxPriorityFeePerGas = gasPrice.mul(2);
+  const maxFeePerGas = gasPrice.mul(120).div(100);
+  const maxPriorityFeePerGas = gasPrice.mul(120).div(100);
+  let gasLimit = ethers.utils.hexlify(1000000);
+  try {
+    gasLimit = await wallet.estimateGas({
+      to: route.methodParameters.to,
+      data: route.methodParameters.calldata,
+      value: ethers.BigNumber.from(route.methodParameters.value),
+    });
+  } catch (error) {
+    console.log("Estimate gas error", error);
+  }
 
-  const gasEstimate = await wallet.estimateGas({
-    to: route.methodParameters.to,
-    data: route.methodParameters.calldata,
-    value: ethers.BigNumber.from(route.methodParameters.value),
-  });
-
-  console.log(gasEstimate);
-
+  console.log(gasLimit);
   const txRes = await wallet.sendTransaction({
     data: route.methodParameters.calldata,
     to: route.methodParameters.to,
@@ -138,7 +158,7 @@ export async function performSwap(wallet, route, decimals) {
     from: wallet.address,
     maxFeePerGas,
     maxPriorityFeePerGas,
-    gasLimit: gasEstimate.mul(2),
+    gasLimit: gasLimit,
   });
 
   const swapReceipt = await txRes.wait();
