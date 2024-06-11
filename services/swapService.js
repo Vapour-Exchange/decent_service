@@ -122,9 +122,13 @@ function getAmountFromTransaction(receipt, decimals) {
 
 export async function approveToken(wallet, tokenAddress, spender, amount) {
   const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
+  const gasLimit = 100000;
   const tokenApprovalTx = await tokenContract.approve(
     spender,
-    ethers.BigNumber.from(amount.toString())
+    ethers.BigNumber.from(amount.toString()),
+    {
+      gasLimit: ethers.BigNumber.from(gasLimit.toString()),
+    }
   );
   const tokenApprovalReceipt = await tokenApprovalTx.wait();
 
