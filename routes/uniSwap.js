@@ -272,6 +272,7 @@ router.post("/quote", async (req, res) => {
         min: 1,
         network_fees: config.networkFees,
         platform_fees: config.platformFees,
+        slippage: 0.5,
       },
     });
   } catch (error) {
