@@ -15,7 +15,7 @@ export const MAX_PRIORITY_FEE_PER_GAS = 100000000000;
 export function getSwapOptions(walletAddress) {
   return {
     recipient: walletAddress,
-    slippageTolerance: new Percent(50, 10_000),
+    slippageTolerance: new Percent(100, 10_000),
     deadline: Math.floor(Date.now() / 1000 + 1800),
     type: SwapType.UNIVERSAL_ROUTER,
   };
