@@ -2,7 +2,7 @@ import cors from 'cors';
 import express, { Express } from 'express';
 import helmet from 'helmet';
 import { pino } from 'pino';
-
+import cron from 'node-cron';
 import { healthCheckRouter } from '@/api/healthCheck/healthCheckRouter';
 import { uniswapRouter } from '@/api/swap/uniswap/uniswapRouter';
 import { openAPIRouter } from '@/api-docs/openAPIRouter';
@@ -10,6 +10,7 @@ import errorHandler from '@/common/middleware/errorHandler';
 import rateLimiter from '@/common/middleware/rateLimiter';
 import requestLogger from '@/common/middleware/requestLogger';
 import { env } from '@/common/utils/envConfig';
+import { getPools } from './cron/raydium';
 
 const logger = pino({ name: 'server start' });
 const app: Express = express();
@@ -35,5 +36,8 @@ app.use(openAPIRouter);
 
 // Error handlers
 app.use(errorHandler());
+
+const cronSchedule = process.env.REFRESH_CRON || '*/30 * * * *';
+cron.schedule(cronSchedule, getPools);
 
 export { app, logger };

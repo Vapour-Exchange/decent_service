@@ -205,11 +205,7 @@ export const uniswapRouter: Router = (() => {
       const alphaRouter = getRouter(config.chainId, provider);
       logger.info(`Alpha Router initialized`);
 
-      const route = await alphaRouter.route(wethAmount, outputToken, TradeType.EXACT_INPUT, options, {
-        useCachedRoutes: true,
-        writeToCachedRoutes: true,
-        optimisticCachedRoutes: true,
-      });
+      const route = await alphaRouter.route(wethAmount, outputToken, TradeType.EXACT_INPUT, options);
 
       if (!route) throw new Error('No route found for the swap');
 
