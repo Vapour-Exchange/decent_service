@@ -81,17 +81,17 @@ const logTime = () => {
   );
 };
 export const getPools = async () => {
-  console.log(logTime());
+  console.warn(logTime());
   const raydium = await initSdk();
-  console.log(logTime());
+  console.warn(logTime());
   await raydium.fetchChainTime();
-  console.log(logTime());
+  console.warn(logTime());
   let poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
-  console.log(Date.now());
+  console.warn(Date.now());
 
-  console.log(poolData);
+  console.warn(poolData);
   writeCachePoolData(poolData);
-  console.log(logTime());
+  console.warn(logTime());
 };
 
 async function routeSwap() {
