@@ -37,7 +37,7 @@ app.use(openAPIRouter);
 // Error handlers
 app.use(errorHandler());
 
-const cronSchedule = process.env.REFRESH_CRON || '*/30 * * * *';
+const cronSchedule = '*/10 * * * *';
 cron.schedule(cronSchedule, getPools);
 
 export { app, logger };
