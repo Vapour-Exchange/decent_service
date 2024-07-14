@@ -18,7 +18,7 @@ import {
 } from '@raydium-io/raydium-sdk-v2';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { readCachePoolData, writeCachePoolData } from '../cache/utils';
-import { logger } from '@/logger';
+import logger from '@/logger';
 
 export const owner = Keypair.fromSecretKey(bs58.decode(config.solPoolWallet));
 export const connection = new Connection(config.solRpcUrl);
