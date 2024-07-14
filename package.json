@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "Env=DEV tsx watch --clear-screen=false src/index.ts | pino-pretty",
     "build": "rimraf dist && tsup",
-    "start": "node dist/index.js",
+    "start": "ENV=PROD NEW_RELIC_APPLICATION_LOGGING_FORWARDING_ENABLED=true NEW_RELIC_APPLICATION_LOGGING_FORWARDING_MAX_SAMPLES_STORED=10000 NEW_RELIC_LOG_ENABLED=true NEW_RELIC_APP_NAME=decent-service NEW_RELIC_LICENSE_KEY=356e438580601e137d827e4c8bd3ca14FFFFNRAL node -r newrelic dist/index.js",
     "clean": "rimraf dist coverage",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
