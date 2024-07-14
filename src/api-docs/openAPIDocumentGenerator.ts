@@ -2,9 +2,9 @@ import { OpenApiGeneratorV3, OpenAPIRegistry } from '@asteasolutions/zod-to-open
 
 import { healthCheckRegistry } from '@/api/healthCheck/healthCheckRouter';
 import { uniswapRegistry } from '@/api/swap/uniswap/uniswapRouter';
-
+import { raydiumRegistry } from '@/api/swap/raydium/raydiumRouter';
 export function generateOpenAPIDocument() {
-  const registry = new OpenAPIRegistry([healthCheckRegistry, uniswapRegistry]);
+  const registry = new OpenAPIRegistry([healthCheckRegistry, uniswapRegistry, raydiumRegistry]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
   return generator.generateDocument({

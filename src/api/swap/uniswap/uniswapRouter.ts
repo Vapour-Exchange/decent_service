@@ -30,7 +30,7 @@ export const uniswapRouter: Router = (() => {
 
   uniswapRegistry.registerPath({
     method: 'post',
-    path: '/swap',
+    path: '/uniswap/swap',
     tags: ['Uniswap'],
     request: {
       body: {
@@ -89,7 +89,7 @@ export const uniswapRouter: Router = (() => {
 
   uniswapRegistry.registerPath({
     method: 'post',
-    path: '/approve-max',
+    path: '/uniswap/approve-max',
     tags: ['Uniswap'],
     request: {
       body: {
@@ -149,7 +149,7 @@ export const uniswapRouter: Router = (() => {
 
   uniswapRegistry.registerPath({
     method: 'post',
-    path: '/quote',
+    path: '/uniswap/quote',
     tags: ['Uniswap'],
     request: {
       body: {

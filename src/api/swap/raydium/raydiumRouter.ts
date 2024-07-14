@@ -1,43 +1,41 @@
 import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import express, { Request, Response, Router } from 'express';
-import { z } from 'zod';
 
-import { GetUserSchema, UserSchema } from '@/api/user/userModel';
-import { userService } from '@/api/user/userService';
+import { z } from 'zod';
+import config from '@/config';
+import { SwapSchema } from '@/api/swap/uniswap/uniswapModel';
+
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
 import { handleServiceResponse, validateRequest } from '@/common/utils/httpHandlers';
+import logger from '@/logger';
+import { getPools } from '@/cron/raydium';
 
-export const userRegistry = new OpenAPIRegistry();
+export const raydiumRegistry = new OpenAPIRegistry();
+raydiumRegistry.register('uniswap', SwapSchema);
 
-userRegistry.register('User', UserSchema);
-
-export const userRouter: Router = (() => {
+export const raydiumRouter: Router = (() => {
   const router = express.Router();
 
-  userRegistry.registerPath({
+  raydiumRegistry.registerPath({
     method: 'get',
-    path: '/users',
-    tags: ['User'],
-    responses: createApiResponse(z.array(UserSchema), 'Success'),
+    path: '/raydium/get-pools',
+    tags: ['Raydium'],
+    request: {},
+    responses: createApiResponse(SwapSchema, 'Success'),
   });
 
-  router.get('/', async (_req: Request, res: Response) => {
-    const serviceResponse = await userService.findAll();
-    handleServiceResponse(serviceResponse, res);
-  });
-
-  userRegistry.registerPath({
-    method: 'get',
-    path: '/users/{id}',
-    tags: ['User'],
-    request: { params: GetUserSchema.shape.params },
-    responses: createApiResponse(UserSchema, 'Success'),
-  });
-
-  router.get('/:id', validateRequest(GetUserSchema), async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id as string, 10);
-    const serviceResponse = await userService.findById(id);
-    handleServiceResponse(serviceResponse, res);
+  router.get('/get-pools', async (req: Request, res: Response) => {
+    logger.info('Request body:', req.body);
+    try {
+      const pools = await getPools();
+      res.status(200).json({
+        success: true,
+        data: null,
+      });
+    } catch (error: any) {
+      logger.error('Error in getting pools process:', error);
+      res.status(500).json({ success: false, errors: error.message });
+    }
   });
 
   return router;
