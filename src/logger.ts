@@ -24,9 +24,7 @@ const stream: LoggerStream = {
 
 (logger as any).stream = stream;
 
-if (process.env.Env !== 'DEV') {
-  const options: Record<string, unknown> = {};
-  logger.add(new NewrelicTransport(options));
-}
+const options: Record<string, unknown> = {};
+logger.add(new NewrelicTransport(options));
 
 export default logger;
