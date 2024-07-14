@@ -30,7 +30,7 @@ export const raydiumRouter: Router = (() => {
       const pools = await getPools();
       res.status(200).json({
         success: true,
-        data: null,
+        data: pools,
       });
     } catch (error: any) {
       logger.error('Error in getting pools process:', error);

@@ -18,6 +18,7 @@ import {
 } from '@raydium-io/raydium-sdk-v2';
 import { NATIVE_MINT } from '@solana/spl-token';
 import { readCachePoolData, writeCachePoolData } from '../cache/utils';
+import { logger } from 'ethers';
 
 export const owner = Keypair.fromSecretKey(bs58.decode(config.solPoolWallet));
 export const connection = new Connection(config.solRpcUrl);
@@ -81,15 +82,25 @@ const logTime = () => {
   );
 };
 export const getPools = async () => {
-  console.log(logTime());
+  let poolData = readCachePoolData(1000 * 60 * 30);
+
+  if (poolData.ammPools.length > 0) {
+    return poolData;
+  }
+
+  logger.info('fetching pool data');
   const raydium = await initSdk();
-  console.log(logTime());
+  logger.info('sdk initialized', logTime());
   await raydium.fetchChainTime();
-  console.log(logTime());
-  let poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
-  console.log(poolData);
+  logger.info('chain time fetched', logTime());
+
+  poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
+  logger.info('pool data fetched', logTime());
   writeCachePoolData(poolData);
-  console.log(logTime());
+
+  logger.info('cache pool data', logTime());
+
+  return poolData;
 };
 
 async function routeSwap() {
