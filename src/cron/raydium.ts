@@ -99,7 +99,7 @@ export const getPools = async () => {
 
   poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
   logger.info('pool data fetched', logTime());
-  writeCachePoolData(poolData);
+  await writeCachePoolData(poolData);
 
   logger.info('cache pool data', logTime());
 
