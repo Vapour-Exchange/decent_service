@@ -2,6 +2,7 @@ import { Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-s
 import { Connection, Keypair, clusterApiUrl } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import bs58 from 'bs58';
+import { PublicKey } from '@solana/web3.js';
 import config from '../config';
 
 import {
@@ -103,37 +104,28 @@ export const getPools = async () => {
   return poolData;
 };
 
-async function routeSwap() {
+export async function routeSwap(amount: string, inToken: string, outToken: string) {
   const raydium = await initSdk();
   await raydium.fetchChainTime();
 
-  const inputAmount = '100';
-  const SOL = NATIVE_MINT; // or WSOLMint
-  const [inputMint, outputMint] = [USDCMint, SOL];
+  const [inputMint, outputMint] = [new PublicKey(inToken), new PublicKey(outToken)];
   const [inputMintStr, outputMintStr] = [inputMint.toBase58(), outputMint.toBase58()];
 
-  // strongly recommend cache all pool data, it will reduce lots of data fetching time
-  // code below is a simple way to cache it, you can implement it with any other ways
-  let poolData = readCachePoolData(); // initial cache time is 10 mins(1000 * 60 * 10), if wants to cache longer, set bigger number in milliseconds
-  // let poolData = readCachePoolData(1000 * 60 * 60 * 24 * 10) // example for cache 1 day
+  let poolData = readCachePoolData(1000 * 60 * 35);
   if (poolData.ammPools.length === 0) {
     console.log('fetching all pool basic info, this might take a while (more than 30 seconds)..');
     poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
-    // console.log(poolData)
+
     writeCachePoolData(poolData);
   }
 
   console.log('computing swap route..');
-  // route here also can cache for a time period by pair to reduce time
-  // e.g.{inputMint}-${outputMint}'s routes, if poolData don't change, routes should be almost same
   const routes = raydium.tradeV2.getAllRoute({
     inputMint,
     outputMint,
     ...poolData,
   });
 
-  // data here also can try to cache if you wants e.g. mintInfos
-  // but rpc related info doesn't suggest to cache it for a long time, because base/quote reserve and pool price change by time
   const {
     routePathDict,
     mintInfos,
@@ -159,7 +151,7 @@ async function routeSwap() {
         decimals: mintInfos[inputMintStr].decimals,
         isToken2022: mintInfos[inputMintStr].programId.equals(TOKEN_2022_PROGRAM_ID),
       }),
-      inputAmount
+      amount
     ),
     directPath: routes.directPath.map(
       (p: any) =>
@@ -192,6 +184,13 @@ async function routeSwap() {
     minimumOut: targetRoute.minAmountOut.amount.toExact(),
     swapType: targetRoute.routeType,
   });
+
+  return {
+    input: targetRoute.amountIn.amount.toExact(),
+    output: targetRoute.amountOut.amount.toExact(),
+    minimumOut: targetRoute.minAmountOut.amount.toExact(),
+    swapType: targetRoute.routeType,
+  };
 
   console.log('fetching swap route pool keys..');
   const poolKeys = await raydium.tradeV2.computePoolToPoolKeys({
