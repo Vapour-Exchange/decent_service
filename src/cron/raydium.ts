@@ -1,4 +1,4 @@
-import { Raydium, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2';
+import { Raydium, ReturnTypeGetAllRoute, TxVersion, parseTokenAccountResp } from '@raydium-io/raydium-sdk-v2';
 import { Connection, Keypair, clusterApiUrl } from '@solana/web3.js';
 import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import bs58 from 'bs58';
@@ -18,7 +18,7 @@ import {
   printSimulate,
 } from '@raydium-io/raydium-sdk-v2';
 import { NATIVE_MINT } from '@solana/spl-token';
-import { readCachePoolData, writeCachePoolData } from '../cache/utils';
+import { cacheRoutes, readCachePoolData, readCachedRoutes, writeCachePoolData } from '../cache/utils';
 import logger from '@/logger';
 
 export const owner = Keypair.fromSecretKey(bs58.decode(config.solPoolWallet));
@@ -85,7 +85,7 @@ const logTime = () => {
 export const getPools = async () => {
   let poolData = await readCachePoolData(1000 * 60 * 30);
 
-  logger.info(`POOL INFO ${poolData.length}`);
+  logger.info(`POOL INFO ${poolData?.ammPools?.length}`);
   if (poolData?.ammPools?.length > 0) {
     return poolData;
   }
@@ -113,22 +113,28 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
   const [inputMint, outputMint] = [new PublicKey(inToken), new PublicKey(outToken)];
   const [inputMintStr, outputMintStr] = [inputMint.toBase58(), outputMint.toBase58()];
 
-  let poolData = await readCachePoolData(1000 * 60 * 35);
-  if (poolData?.ammPools.length === 0) {
-    console.log('fetching all pool basic info, this might take a while (more than 30 seconds)..');
-    poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
+  let routes = await readCachedRoutes(inputMint, outputMint);
+  if (!routes) {
+    let poolData = await readCachePoolData(1000 * 60 * 35);
+    if (poolData?.ammPools.length === 0) {
+      console.log('fetching all pool basic info, this might take a while (more than 30 seconds)..');
+      poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
 
-    writeCachePoolData(poolData);
+      writeCachePoolData(poolData);
+    }
+
+    console.log(poolData);
+
+    console.log('computing swap route..');
+
+    routes = raydium.tradeV2.getAllRoute({
+      inputMint,
+      outputMint,
+      ...poolData,
+    });
+
+    await cacheRoutes(inputMint, outputMint, routes as ReturnTypeGetAllRoute);
   }
-
-  console.log(poolData);
-
-  console.log('computing swap route..');
-  const routes = raydium.tradeV2.getAllRoute({
-    inputMint,
-    outputMint,
-    ...poolData,
-  });
 
   const {
     routePathDict,
@@ -157,7 +163,7 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
       }),
       amount
     ),
-    directPath: routes.directPath.map(
+    directPath: (routes as ReturnTypeGetAllRoute).directPath.map(
       (p: any) =>
         ammSimulateCache[p.id.toBase58()] || computeClmmPoolInfo[p.id.toBase58()] || computeCpmmData[p.id.toBase58()]
     ),
