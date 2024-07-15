@@ -47,8 +47,11 @@ export const readCachePoolData = async (cacheTime?: any) => {
         mintB: new PublicKey(p.mintB),
       }));
       console.log('read cache pool data success');
+
+      return parsedData;
     } else {
       console.log('no cache pool data found');
+      return [];
     }
   } catch (error) {
     console.log('cannot read cache pool data', error);

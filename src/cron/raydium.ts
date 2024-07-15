@@ -85,7 +85,7 @@ const logTime = () => {
 export const getPools = async () => {
   let poolData = readCachePoolData(1000 * 60 * 30);
 
-  if (poolData.ammPools.length > 0) {
+  if (poolData?.ammPools?.length > 0) {
     return poolData;
   }
 
