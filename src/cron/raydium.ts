@@ -114,12 +114,14 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
   const [inputMintStr, outputMintStr] = [inputMint.toBase58(), outputMint.toBase58()];
 
   let poolData = await readCachePoolData(1000 * 60 * 35);
-  if (poolData.ammPools.length === 0) {
+  if (poolData?.ammPools.length === 0) {
     console.log('fetching all pool basic info, this might take a while (more than 30 seconds)..');
     poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
 
     writeCachePoolData(poolData);
   }
+
+  console.log(poolData);
 
   console.log('computing swap route..');
   const routes = raydium.tradeV2.getAllRoute({

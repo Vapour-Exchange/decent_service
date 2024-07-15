@@ -1,5 +1,6 @@
 import { PublicKey } from '@solana/web3.js';
 import Redis from 'ioredis';
+import { BasicPoolInfo } from '@raydium-io/raydium-sdk-v2';
 
 const redis = new Redis({
   host: 'vpx.redis.cache.windows.net',
@@ -13,9 +14,9 @@ const redis = new Redis({
 export const readCachePoolData = async (cacheTime?: any) => {
   let cacheData = {
     time: 0,
-    ammPools: [],
-    clmmPools: [],
-    cpmmPools: [],
+    ammPools: [] as BasicPoolInfo[],
+    clmmPools: [] as BasicPoolInfo[],
+    cpmmPools: [] as BasicPoolInfo[],
   };
 
   try {
@@ -47,11 +48,8 @@ export const readCachePoolData = async (cacheTime?: any) => {
         mintB: new PublicKey(p.mintB),
       }));
       console.log('read cache pool data success');
-
-      return parsedData;
     } else {
       console.log('no cache pool data found');
-      return [];
     }
   } catch (error) {
     console.log('cannot read cache pool data', error);
