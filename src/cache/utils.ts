@@ -1,46 +1,57 @@
 import { PublicKey } from '@solana/web3.js';
-import jsonfile from 'jsonfile';
-import fs from 'fs';
-import path from 'path';
+import Redis from 'ioredis';
 
-const filePath = path.join(process.cwd(), '../data/pool_data.json');
+const redis = new Redis({
+  host: 'vpx.redis.cache.windows.net',
+  port: 6380,
+  password: 'WCIOustdCG4VrSa4mHVEG6WANTpUC5PKWAzCaFMphEA=',
+  tls: {
+    servername: 'vpx.redis.cache.windows.net',
+  },
+});
 
-export const readCachePoolData = (cacheTime?: any) => {
+export const readCachePoolData = async (cacheTime?: any) => {
   let cacheData = {
     time: 0,
     ammPools: [],
     clmmPools: [],
     cpmmPools: [],
   };
+
   try {
     console.log('reading cache pool data');
-    const data = jsonfile.readFileSync(filePath);
-    if (Date.now() - data.time > (cacheTime ?? 1000 * 60 * 10)) {
-      console.log('cache data expired');
-      return cacheData;
+    const data = await redis.get('pool_data');
+    if (data) {
+      const parsedData = JSON.parse(data);
+      if (Date.now() - parsedData.time > (cacheTime ?? 1000 * 60 * 10)) {
+        console.log('cache data expired');
+        return cacheData;
+      }
+      cacheData.time = parsedData.time;
+      cacheData.ammPools = parsedData.ammPools.map((p: any) => ({
+        ...p,
+        id: new PublicKey(p.id),
+        mintA: new PublicKey(p.mintA),
+        mintB: new PublicKey(p.mintB),
+      }));
+      cacheData.clmmPools = parsedData.clmmPools.map((p: any) => ({
+        ...p,
+        id: new PublicKey(p.id),
+        mintA: new PublicKey(p.mintA),
+        mintB: new PublicKey(p.mintB),
+      }));
+      cacheData.cpmmPools = parsedData.cpmmPools.map((p: any) => ({
+        ...p,
+        id: new PublicKey(p.id),
+        mintA: new PublicKey(p.mintA),
+        mintB: new PublicKey(p.mintB),
+      }));
+      console.log('read cache pool data success');
+    } else {
+      console.log('no cache pool data found');
     }
-    cacheData.time = data.time;
-    cacheData.ammPools = data.ammPools.map((p: any) => ({
-      ...p,
-      id: new PublicKey(p.id),
-      mintA: new PublicKey(p.mintA),
-      mintB: new PublicKey(p.mintB),
-    }));
-    cacheData.clmmPools = data.clmmPools.map((p: any) => ({
-      ...p,
-      id: new PublicKey(p.id),
-      mintA: new PublicKey(p.mintA),
-      mintB: new PublicKey(p.mintB),
-    }));
-    cacheData.cpmmPools = data.cpmmPools.map((p: any) => ({
-      ...p,
-      id: new PublicKey(p.id),
-      mintA: new PublicKey(p.mintA),
-      mintB: new PublicKey(p.mintB),
-    }));
-    console.log('read cache pool data success');
-  } catch {
-    console.log('cannot read cache pool data');
+  } catch (error) {
+    console.log('cannot read cache pool data', error);
   }
 
   return {
@@ -50,35 +61,44 @@ export const readCachePoolData = (cacheTime?: any) => {
   };
 };
 
-export const writeCachePoolData = (data: any) => {
+export const writeCachePoolData = async (data: any) => {
   console.log('caching all pool basic info..');
 
-  jsonfile
-    .writeFile(filePath, {
-      time: Date.now(),
-      ammPools: data.ammPools.map((p: any) => ({
-        id: p.id.toBase58(),
-        version: p.version,
-        mintA: p.mintA.toBase58(),
-        mintB: p.mintB.toBase58(),
-      })),
-      clmmPools: data.clmmPools.map((p: any) => ({
-        id: p.id.toBase58(),
-        version: p.version,
-        mintA: p.mintA.toBase58(),
-        mintB: p.mintB.toBase58(),
-      })),
-      cpmmPools: data.cpmmPools.map((p: any) => ({
-        id: p.id.toBase58(),
-        version: p.version,
-        mintA: p.mintA.toBase58(),
-        mintB: p.mintB.toBase58(),
-      })),
-    })
-    .then(() => {
-      console.log('cache pool data success');
-    })
-    .catch((e: Error) => {
-      console.log('cache pool data failed', e);
-    });
+  const cacheData = {
+    time: Date.now(),
+    ammPools: data.ammPools.map((p: any) => ({
+      id: p.id.toBase58(),
+      version: p.version,
+      mintA: p.mintA.toBase58(),
+      mintB: p.mintB.toBase58(),
+    })),
+    clmmPools: data.clmmPools.map((p: any) => ({
+      id: p.id.toBase58(),
+      version: p.version,
+      mintA: p.mintA.toBase58(),
+      mintB: p.mintB.toBase58(),
+    })),
+    cpmmPools: data.cpmmPools.map((p: any) => ({
+      id: p.id.toBase58(),
+      version: p.version,
+      mintA: p.mintA.toBase58(),
+      mintB: p.mintB.toBase58(),
+    })),
+  };
+
+  try {
+    await redis.set('pool_data', JSON.stringify(cacheData));
+    console.log('cache pool data success');
+  } catch (error) {
+    console.log('cache pool data failed', error);
+  }
 };
+
+// Don't forget to handle Redis client connection and errors
+redis.on('connect', () => {
+  console.log('Connected to Redis');
+});
+
+redis.on('error', (err) => {
+  console.log('Redis error: ', err);
+});
