@@ -83,11 +83,13 @@ const logTime = () => {
   );
 };
 export const getPools = async () => {
-  let poolData = readCachePoolData(1000 * 60 * 30);
+  let poolData = await readCachePoolData(1000 * 60 * 30);
 
+  logger.info(`POOL INFO ${poolData.length}`);
   if (poolData?.ammPools?.length > 0) {
     return poolData;
   }
+  logger.warn('pool data cache not found, fetching pool data');
 
   logger.info('fetching pool data');
   const raydium = await initSdk();
