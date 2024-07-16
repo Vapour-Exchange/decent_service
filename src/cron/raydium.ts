@@ -189,17 +189,19 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
   if (!targetRoute) throw new Error('no swap routes were found');
 
   console.log('best swap route:', {
-    input: targetRoute.amountIn.amount.toExact(),
-    output: targetRoute.amountOut.amount.toExact(),
-    minimumOut: targetRoute.minAmountOut.amount.toExact(),
-    swapType: targetRoute.routeType,
+    min: targetRoute.amountIn.amount.toExact(),
+    price: targetRoute.amountOut.amount.toExact(),
+    network_fees: 0.02,
+    platform_fees: 0.2,
+    slippage: 0.5,
   });
 
   return {
-    input: targetRoute.amountIn.amount.toExact(),
-    output: targetRoute.amountOut.amount.toExact(),
-    minimumOut: targetRoute.minAmountOut.amount.toExact(),
-    swapType: targetRoute.routeType,
+    min: targetRoute.amountIn.amount.toExact(),
+    price: targetRoute.amountOut.amount.toExact(),
+    network_fees: 0.02,
+    platform_fees: 0.2,
+    slippage: 0.5,
   };
 
   console.log('fetching swap route pool keys..');
