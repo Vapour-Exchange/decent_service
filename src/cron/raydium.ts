@@ -128,7 +128,9 @@ async function fetchSolanaFeeInfo() {
   }
 }
 
-export async function routeSwap(amount: string, inToken: string, outToken: string) {
+export async function routeSwap(amount: any, inToken: string, outToken: string) {
+  amount = Number(amount) * 1000000;
+
   const raydium = await initSdk();
   await raydium.fetchChainTime();
 
@@ -261,7 +263,9 @@ const getTransactionDetails = async (txId: string, outputMint: string) => {
   return recieved;
 };
 
-export async function swap(amount: string, inToken: string, outToken: string) {
+export async function swap(amount: any, inToken: string, outToken: string) {
+  amount = Number(amount) * 1000000;
+
   const raydium = await initSdk();
   await raydium.fetchChainTime();
 
