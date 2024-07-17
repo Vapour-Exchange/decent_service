@@ -236,19 +236,24 @@ function sleep(ms: number) {
 const getTransactionDetails = async (txId: string, outputMint: string) => {
   let tes;
   let triesGetTrans = 0;
-  while (!tes && triesGetTrans < 30) {
+  while (!tes && triesGetTrans < 40) {
     try {
-      if (triesGetTrans !== 0) await sleep(10000);
+      if (triesGetTrans !== 0) await sleep(1000);
       triesGetTrans++;
       tes = await connection.getTransaction(txId, { maxSupportedTransactionVersion: 2 });
     } catch (e) {
       console.log('Err getTransaction', txId);
     }
   }
-  if (!tes) throw new Error('Transaction not found');
+  if (!tes) {
+    return { success: false, amount: 0, transaction: ['transction not found'] };
+  }
 
   // Find the token transfer instructions for the specific outputMint
   let recieved = 0;
+  if (tes.meta && tes.meta.err) {
+    return { success: false, amount: 0, transaction: tes };
+  }
   if (tes && tes.meta && tes.meta.preTokenBalances && tes.meta.postTokenBalances) {
     const preTokenBalance = tes.meta.preTokenBalances.find((balance) => balance.mint === outputMint);
     const postTokenBalance = tes.meta.postTokenBalances.find((balance) => balance.mint === outputMint);
@@ -260,7 +265,7 @@ const getTransactionDetails = async (txId: string, outputMint: string) => {
   }
 
   // Calculate the total amount received
-  return recieved;
+  return { success: true, amount: recieved, transaction: tes };
 };
 
 export async function swap(amount: any, inToken: string, outToken: string) {
@@ -416,7 +421,7 @@ export async function swap(amount: any, inToken: string, outToken: string) {
   try {
     const recievedAmount = await getTransactionDetails(txIds[0], outToken);
 
-    return { success: true, amount: recievedAmount, transaction: txIds };
+    return recievedAmount;
   } catch (error) {
     console.error('Transaction confirmation failed:', error);
     return { success: false, error, transaction: txIds };
