@@ -26,9 +26,10 @@ export const connection = new Connection(config.solRpcUrl);
 export const txVersion = TxVersion.V0;
 const cluster = 'mainnet';
 
-let raydium: any;
-export const initSdk = async (params?: any) => {
+let raydium: Raydium;
+export const initSdk = async (params?: any): Promise<Raydium> => {
   if (raydium) return raydium;
+
   console.log(`connect to rpc ${connection.rpcEndpoint} in ${cluster}`);
   raydium = await Raydium.load({
     owner,
@@ -106,6 +107,27 @@ export const getPools = async () => {
   return poolData;
 };
 
+// Function to fetch Solana fee information using fetch
+async function fetchSolanaFeeInfo() {
+  try {
+    const response = await fetch('https://solanacompass.com/api/fees', { cache: 'no-store' });
+    if (!response.ok) {
+      console.error('Failed to fetch Solana fee info');
+      return undefined;
+    }
+    const json = await response.json();
+    const { avg } = json?.[15] ?? {};
+    if (!avg) return undefined; // fetch error
+    return {
+      units: 600000,
+      microLamports: Math.min(Math.ceil((avg * 1000000) / 600000), 250000),
+    };
+  } catch (error) {
+    console.error('Error fetching Solana fee info:', error);
+    return undefined;
+  }
+}
+
 export async function routeSwap(amount: string, inToken: string, outToken: string) {
   const raydium = await initSdk();
   await raydium.fetchChainTime();
@@ -115,7 +137,7 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
 
   let routes = await readCachedRoutes(inputMint, outputMint);
   if (!routes) {
-    let poolData = await readCachePoolData(1000 * 60 * 35);
+    let poolData = await readCachePoolData(1000 * 60 * 90);
     if (poolData?.ammPools.length === 0) {
       console.log('fetching all pool basic info, this might take a while (more than 30 seconds)..');
       poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
@@ -180,7 +202,7 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
       },
     }),
     chainTime: Math.floor(raydium.chainTimeData?.chainTime ?? Date.now() / 1000),
-    slippage: 2,
+    slippage: 0.15,
     epochInfo: await raydium.connection.getEpochInfo(),
   });
 
@@ -188,12 +210,12 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
   const targetRoute = swapRoutes[0];
   if (!targetRoute) throw new Error('no swap routes were found');
 
+  console.log('target swap route:', targetRoute);
   console.log('best swap route:', {
-    min: targetRoute.amountIn.amount.toExact(),
-    price: targetRoute.amountOut.amount.toExact(),
-    network_fees: 0.02,
-    platform_fees: 0.2,
-    slippage: 0.5,
+    input: targetRoute.amountIn.amount.toExact(),
+    output: targetRoute.amountOut.amount.toExact(),
+    minimumOut: targetRoute.minAmountOut.amount.toExact(),
+    swapType: targetRoute.routeType,
   });
 
   return {
@@ -203,12 +225,168 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
     platform_fees: 0.2,
     slippage: 0.5,
   };
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const getTransactionDetails = async (txId: string, outputMint: string) => {
+  let tes;
+  let triesGetTrans = 0;
+  while (!tes && triesGetTrans < 30) {
+    try {
+      if (triesGetTrans !== 0) await sleep(10000);
+      triesGetTrans++;
+      tes = await connection.getTransaction(txId, { maxSupportedTransactionVersion: 2 });
+    } catch (e) {
+      console.log('Err getTransaction', txId);
+    }
+  }
+  if (!tes) throw new Error('Transaction not found');
+
+  // Find the token transfer instructions for the specific outputMint
+  let recieved = 0;
+  if (tes && tes.meta && tes.meta.preTokenBalances && tes.meta.postTokenBalances) {
+    const preTokenBalance = tes.meta.preTokenBalances.find((balance) => balance.mint === outputMint);
+    const postTokenBalance = tes.meta.postTokenBalances.find((balance) => balance.mint === outputMint);
+
+    console.log('preTokenBalance:', preTokenBalance, 'postTokenBalance:', postTokenBalance);
+    if (preTokenBalance && postTokenBalance) {
+      recieved = (postTokenBalance.uiTokenAmount.uiAmount || 0) - (preTokenBalance.uiTokenAmount.uiAmount || 0);
+    }
+  }
+
+  // Calculate the total amount received
+  return recieved;
+};
+
+export async function swap(amount: string, inToken: string, outToken: string) {
+  const raydium = await initSdk();
+  await raydium.fetchChainTime();
+
+  const [inputMint, outputMint] = [new PublicKey(inToken), new PublicKey(outToken)];
+  const [inputMintStr, outputMintStr] = [inputMint.toBase58(), outputMint.toBase58()];
+
+  let routes = await readCachedRoutes(inputMint, outputMint);
+  if (!routes) {
+    let poolData = await readCachePoolData(1000 * 60 * 90);
+    if (poolData?.ammPools.length === 0) {
+      console.log('fetching all pool basic info, this might take a while (more than 30 seconds)..');
+      poolData = await raydium.tradeV2.fetchRoutePoolBasicInfo();
+
+      writeCachePoolData(poolData);
+    }
+
+    console.log(poolData);
+
+    console.log('computing swap route..');
+
+    routes = raydium.tradeV2.getAllRoute({
+      inputMint,
+      outputMint,
+      ...poolData,
+    });
+
+    await cacheRoutes(inputMint, outputMint, routes as ReturnTypeGetAllRoute);
+  }
+
+  const {
+    routePathDict,
+    mintInfos,
+    ammPoolsRpcInfo,
+    ammSimulateCache,
+
+    clmmPoolsRpcInfo,
+    computeClmmPoolInfo,
+    computePoolTickData,
+
+    computeCpmmData,
+  } = await raydium.tradeV2.fetchSwapRoutesData({
+    routes,
+    inputMint,
+    outputMint,
+  });
+
+  console.log('calculating available swap routes...');
+  const swapRoutes = raydium.tradeV2.getAllRouteComputeAmountOut({
+    inputTokenAmount: new TokenAmount(
+      new Token({
+        mint: inputMintStr,
+        decimals: mintInfos[inputMintStr].decimals,
+        isToken2022: mintInfos[inputMintStr].programId.equals(TOKEN_2022_PROGRAM_ID),
+      }),
+      amount
+    ),
+    directPath: (routes as ReturnTypeGetAllRoute).directPath.map(
+      (p: any) =>
+        ammSimulateCache[p.id.toBase58()] || computeClmmPoolInfo[p.id.toBase58()] || computeCpmmData[p.id.toBase58()]
+    ),
+    routePathDict,
+    simulateCache: ammSimulateCache,
+    tickCache: computePoolTickData,
+    mintInfos: mintInfos,
+    outputToken: toApiV3Token({
+      ...mintInfos[outputMintStr],
+      programId: mintInfos[outputMintStr].programId.toBase58(),
+      address: outputMintStr,
+      extensions: {
+        feeConfig: toFeeConfig(mintInfos[outputMintStr].feeConfig),
+      },
+    }),
+    chainTime: Math.floor(raydium.chainTimeData?.chainTime ?? Date.now() / 1000),
+    slippage: 0.15,
+    epochInfo: await raydium.connection.getEpochInfo(),
+  });
+
+  // swapRoutes are sorted by out amount, so first one should be the best route
+  const targetRoute = swapRoutes[0];
+  if (!targetRoute) throw new Error('no swap routes were found');
+
+  console.log('target swap route:', targetRoute);
+  console.log('best swap route:', {
+    input: targetRoute.amountIn.amount.toExact(),
+    output: targetRoute.amountOut.amount.toExact(),
+    minimumOut: targetRoute.minAmountOut.amount.toExact(),
+    swapType: targetRoute.routeType,
+  });
+
+  // console.log('best swap route:', {
+  //   min: targetRoute.amountIn.amount.toExact(),
+  //   price: targetRoute.amountOut.amount.toExact(),
+  //   network_fees: 0.02,
+  //   platform_fees: 0.2,
+  //   slippage: 0.5,
+  // });
+
+  // return {
+  //   min: targetRoute.amountIn.amount.toExact(),
+  //   price: targetRoute.amountOut.amount.toExact(),
+  //   network_fees: 0.02,
+  //   platform_fees: 0.2,
+  //   slippage: 0.5,
+  // };
+
+  const computeBudgetConfig = (await fetchSolanaFeeInfo()) || {
+    units: 600000,
+    microLamports: 250000,
+  };
+
+  console.log(computeBudgetConfig);
 
   console.log('fetching swap route pool keys..');
   const poolKeys = await raydium.tradeV2.computePoolToPoolKeys({
     pools: targetRoute.poolInfoList,
     ammRpcData: ammPoolsRpcInfo,
     clmmRpcData: clmmPoolsRpcInfo,
+  });
+
+  console.log('best swap route:', {
+    input: targetRoute.amountIn.amount.toExact(),
+    output: targetRoute.amountOut.amount.toExact(),
+    minimumOut: targetRoute.minAmountOut.amount.toExact(),
+    swapType: targetRoute.routeType,
+    routes: targetRoute.poolInfoList.map((p) => `${poolType[p.version]} ${p.id} ${(p as any).status}`).join(` -> `),
   });
 
   console.log('build swap tx..');
@@ -221,15 +399,22 @@ export async function routeSwap(amount: string, inToken: string, outToken: strin
       associatedOnly: true,
       checkCreateATAOwner: true,
     },
-    computeBudgetConfig: {
-      units: 600000,
-      microLamports: 10000000,
-    },
+    computeBudgetConfig,
   });
 
   printSimulate(transactions);
 
   console.log('execute tx..');
-  const { txIds } = await execute({ sequentially: true });
-  console.log('txIds:', txIds);
+  const { txIds, signedTxs } = await execute({ sequentially: true, skipPreflight: true });
+
+  console.log('txIds:', txIds, JSON.stringify(signedTxs));
+
+  try {
+    const recievedAmount = await getTransactionDetails(txIds[0], outToken);
+
+    return { success: true, amount: recievedAmount, transaction: txIds };
+  } catch (error) {
+    console.error('Transaction confirmation failed:', error);
+    return { success: false, error, transaction: txIds };
+  }
 }
