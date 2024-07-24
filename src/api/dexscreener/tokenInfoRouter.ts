@@ -1,3 +1,4 @@
+import logger from '@/logger';
 import axios from 'axios';
 import express, { Request, Response, Router } from 'express';
 
@@ -5,8 +6,8 @@ export const tokenInfoRouter: Router = (() => {
   const router = express.Router();
 
   router.get('/dexscreener/token_info/:chainId/:pairAddress', async (req: Request, res: Response) => {
-    const chainId = req.params.chainId;
-    const pairAddress = req.params.pairAddress;
+    const chainId = req.query.chainId;
+    const pairAddress = req.query.pairAddress;
 
     try {
       const response = await axios.get(`https://api.dexscreener.com/latest/dex/pairs/${chainId}/${pairAddress}`);
@@ -19,11 +20,13 @@ export const tokenInfoRouter: Router = (() => {
   });
 
   router.get('/dexscreener/token_info', async (req: Request, res: Response) => {
-    const dexId  = req.params.dexID;
-    const symbol =   req.params.symbol; 
-    const tokenAddress  = req.params.tokenAddress;
+
+    const dexId  = req.query.dexID;
+    const symbol =   req.query.symbol; 
+    const tokenAddress  = req.query.tokenAddress;
 
     if (!dexId || !symbol || !tokenAddress) {
+      logger.info(`${dexId} - dexId, ${symbol} - symbol, ${tokenAddress} - tokenAddress`)
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
