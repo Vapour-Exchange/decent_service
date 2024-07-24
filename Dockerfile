@@ -1,4 +1,4 @@
-FROM node:current-slim
+FROM node@sha256:14e3e539464a5a77bb5fd8f613cbd54d1842a900e7f4ce06f47e42f6a89a83e4
 
 # Create app directory
 WORKDIR /usr/src/app
