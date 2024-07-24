@@ -18,7 +18,7 @@ export const tokenInfoRouter: Router = (() => {
     }
   });
 
-  router.post('/dexscreener/token_info', async (req, res) => {
+  router.get('/dexscreener/token_info', async (req, res) => {
     const { dexId, symbol, tokenAddress } = req.body;
 
     if (!dexId || !symbol || !tokenAddress) {
