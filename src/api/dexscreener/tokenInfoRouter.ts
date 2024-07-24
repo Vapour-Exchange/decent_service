@@ -18,8 +18,10 @@ export const tokenInfoRouter: Router = (() => {
     }
   });
 
-  router.get('/dexscreener/token_info', async (req, res) => {
-    const { dexId, symbol, tokenAddress } = req.body;
+  router.get('/dexscreener/token_info', async (req: Request, res: Response) => {
+    const dexId  = req.params.dexID;
+    const symbol =   req.params.symbol; 
+    const tokenAddress  = req.params.tokenAddress;
 
     if (!dexId || !symbol || !tokenAddress) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
