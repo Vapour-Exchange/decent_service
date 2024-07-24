@@ -2,6 +2,8 @@ import cors from 'cors';
 import express, { Express } from 'express';
 import helmet from 'helmet';
 import { pino } from 'pino';
+
+import { tokenInfoRouter } from '@/api/dexscreener/tokenInfoRouter';
 import { healthCheckRouter } from '@/api/healthCheck/healthCheckRouter';
 import { uniswapRouter } from '@/api/swap/uniswap/uniswapRouter';
 import { openAPIRouter } from '@/api-docs/openAPIRouter';
@@ -9,6 +11,7 @@ import errorHandler from '@/common/middleware/errorHandler';
 import rateLimiter from '@/common/middleware/rateLimiter';
 import requestLogger from '@/common/middleware/requestLogger';
 import { env } from '@/common/utils/envConfig';
+
 import { raydiumRouter } from './api/swap/raydium/raydiumRouter';
 
 const logger = pino({ name: 'server start' });
@@ -30,6 +33,7 @@ app.use(express.json());
 app.use('/health-check', healthCheckRouter);
 app.use('/uniswap', uniswapRouter);
 app.use('/raydium', raydiumRouter);
+app.use('/data', tokenInfoRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
