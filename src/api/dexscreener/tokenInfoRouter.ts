@@ -1,7 +1,7 @@
 import axios from 'axios';
 import express, { Request, Response, Router } from 'express';
 
-export const decentRouter: Router = (() => {
+export const tokenInfoRouter: Router = (() => {
   const router = express.Router();
 
   router.get('/dexscreener/token_info/:chainId/:pairAddress', async (req: Request, res: Response) => {
