@@ -18,14 +18,30 @@ export const decentRouter: Router = (() => {
     }
   });
 
-  router.get('/dexscreener/token_info/:tokenAddreses', async (req: Request, res: Response) => {
-    const tokenAddreses = req.params.tokenAddreses;
+  router.post('/dexscreener/token_info', async (req, res) => {
+    const { dexId, symbol, tokenAddress } = req.body;
+
+    if (!dexId || !symbol || !tokenAddress) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
+    }
 
     try {
-      const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddreses}`);
-      console.log('Data fetch Successfully', response.data);
-      res.status(200).json({ success: false, data: response.data });
-    } catch (error: any) {
+      const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`);
+
+      let filteredByDex = response.data.pairs.filter((pair) => pair.dexId === dexId);
+      let filteredBySymbol = filteredByDex.filter(
+        (pair) => pair.baseToken.symbol === symbol || pair.quoteToken.symbol === symbol
+      );
+      if (filteredBySymbol.length === 0) {
+        return res.status(404).json({ success: false, error: 'No pairs found for the given symbol' });
+      }
+      let data = filteredBySymbol.reduce((max, current) => {
+        let currentFdv = current.fdv || 0;
+        let maxFdv = max.fdv || 0;
+        return currentFdv > maxFdv ? current : max;
+      });
+      res.status(200).json({ success: true, data: data });
+    } catch (error) {
       console.error('Error fetching data from DexScreener:', error);
       res.status(500).json({ success: false, error: error.message });
     }
