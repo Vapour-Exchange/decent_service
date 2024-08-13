@@ -13,6 +13,7 @@ import requestLogger from '@/common/middleware/requestLogger';
 import { env } from '@/common/utils/envConfig';
 
 import { raydiumRouter } from './api/swap/raydium/raydiumRouter';
+import { stonfiRouter } from './api/swap/stonfi/stonfiRouter';
 
 const logger = pino({ name: 'server start' });
 const app: Express = express();
@@ -33,6 +34,7 @@ app.use(express.json());
 app.use('/health-check', healthCheckRouter);
 app.use('/uniswap', uniswapRouter);
 app.use('/raydium', raydiumRouter);
+app.use('/stonfi', stonfiRouter);
 app.use('/data', tokenInfoRouter);
 
 // Swagger UI
