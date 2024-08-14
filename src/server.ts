@@ -14,7 +14,6 @@ import { env } from '@/common/utils/envConfig';
 
 import { raydiumRouter } from './api/swap/raydium/raydiumRouter';
 import { stonfiRouter } from './api/swap/stonfi/stonfiRouter';
-import { walletInfoRouter } from './api/wallet/walletInfoRouter';
 
 const logger = pino({ name: 'server start' });
 const app: Express = express();
@@ -37,7 +36,6 @@ app.use('/uniswap', uniswapRouter);
 app.use('/raydium', raydiumRouter);
 app.use('/stonfi', stonfiRouter);
 app.use('/data', tokenInfoRouter);
-app.use('/wallet', walletInfoRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
