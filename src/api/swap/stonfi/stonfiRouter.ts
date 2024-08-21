@@ -50,7 +50,7 @@ export const stonfiRouter: Router = (() => {
       if (!address) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
       }
-      const response = await axios.get(`https://tonapi.io/v2/accounts/${address}/jettons`);
+      const response = await axios.get(`https://testnet.tonapi.io/v2/accounts/${address}/jettons`);
       res.status(200).json({ success: true, data: response.data.balances });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
