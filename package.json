@@ -27,7 +27,7 @@
     "@ton-api/ton-adapter": "^0.1.0",
     "@ton/core": "^0.57.0",
     "@ton/crypto": "^3.3.0",
-    "@ton/ton": "^15.0.0",
+    "@ton/ton": "^14.0.0",
     "@types/bn.js": "^5.1.5",
     "@types/cors": "^2.8.17",
     "@uniswap/router-sdk": "1.7.1",
