@@ -1,7 +1,9 @@
 import axios from 'axios';
 import express, { Request, Response, Router } from 'express';
+import { TonClient, Address, address } from "@ton/ton";
 import logger from '@/logger';
 import config from '@/config';
+import { getJettonBalances, getTonBalance, gasFeeTransfer, createJettonTransferTransaction } from './helper';
 
 
 
@@ -52,6 +54,63 @@ export const stonfiRouter: Router = (() => {
       res.status(200).json({ success: true, data: response.data.balances });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+
+  router.post('/swap', async (req: Request, res: Response) => {
+    const { walletAddress, tokenAddress, amount } = req.body;
+
+    const claim = []
+
+    if (!walletAddress || !tokenAddress || !amount) {
+      res.status(500).json({ success: false, error: 'Missing required field' });
+    }
+
+    const userIndex = claim.findIndex(user => user.address === walletAddress);
+
+    if (userIndex !== -1) {
+      if (claim[userIndex].limit >= 3) {
+        res.status(500).json({ success: false, error: 'Limit reached' });
+      } else {
+        claim[userIndex].limit += 1;
+      }
+    } else {
+      claim.push({
+        address: walletAddress,
+        limit: 1
+      });
+    }
+    try {
+      // Fetch jetton balances and wallet balance
+      const jettonBalances = await getJettonBalances(walletAddress);
+      const selectedToken = jettonBalances.find(
+        (token) => Address.parse(token.jetton.address).toString() === tokenAddress
+      );
+
+      if (!selectedToken) {
+        res.status(404).json({ success: false, error: 'Token not found' });
+
+      }
+
+      const balanceInTon = await getTonBalance(walletAddress);
+
+      if (balanceInTon > 0) {
+        res.status(500).json({ success: false, error: 'Not Eligible' });
+      }
+      const gasFeeIsTranferred = await gasFeeTransfer(walletAddress)
+      if (gasFeeIsTranferred) {
+        const data = await createJettonTransferTransaction(walletAddress, amount, tokenAddress)
+        res.status(200).json({ success: true, data: data });
+      }
+
+
+      res.status(500).json({ success: false, error: 'Something went wrong' });
+
+
+    } catch (error) {
+      console.error(`Error in /swap endpoint: ${error.message}`);
+      res.status(500).send('Internal server error');
     }
   });
 
