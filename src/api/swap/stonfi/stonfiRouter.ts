@@ -59,48 +59,19 @@ export const stonfiRouter: Router = (() => {
 
 
   router.post('/swap', async (req: Request, res: Response) => {
-    const { walletAddress, tokenAddress, amount } = req.body;
-
-    const claim = []
-
-    if (!walletAddress || !tokenAddress || !amount) {
-      res.status(500).json({ success: false, error: 'Missing required field' });
+    const { walletAddress, tokenAddress, amount, uuid } = req.body;
+    
+    if (!walletAddress || !tokenAddress || !amount || !uuid) {
+      return res.status(400).send("Missing required parameters");
     }
 
-    const userIndex = claim.findIndex(user => user.address === walletAddress);
-
-    if (userIndex !== -1) {
-      if (claim[userIndex].limit >= 3) {
-        res.status(500).json({ success: false, error: 'Limit reached' });
-      } else {
-        claim[userIndex].limit += 1;
-      }
-    } else {
-      claim.push({
-        address: walletAddress,
-        limit: 1
-      });
-    }
     try {
-      // Fetch jetton balances and wallet balance
-      const jettonBalances = await getJettonBalances(walletAddress);
-      const selectedToken = jettonBalances.find(
-        (token) => Address.parse(token.jetton.address).toString() === tokenAddress
-      );
+        
+      const gasFeeTransfer = await gasFee(walletAddress, uuid);
 
-      if (!selectedToken) {
-        res.status(404).json({ success: false, error: 'Token not found' });
 
-      }
-
-      const balanceInTon = await getTonBalance(walletAddress);
-
-      if (balanceInTon > 0) {
-        res.status(500).json({ success: false, error: 'Not Eligible' });
-      }
-      const gasFeeIsTranferred = await gasFeeTransfer(walletAddress)
-      if (gasFeeIsTranferred) {
-        const data = await createJettonTransferTransaction(walletAddress, amount, tokenAddress)
+      if (gasFeeTransfer) {
+        const data = await createJettonTransferTransaction(walletAddress, amount, tokenAddress, uuid)
         res.status(200).json({ success: true, data: data });
       }
 
