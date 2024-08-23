@@ -1,11 +1,15 @@
 import axios from 'axios';
 import express, { Request, Response, Router } from 'express';
-import { TonClient, Address, address } from "@ton/ton";
+import { TonClient, Address, address } from '@ton/ton';
 import logger from '@/logger';
 import config from '@/config';
-import { getJettonBalances, getTonBalance, gasFeeTransfer, createJettonTransferTransaction } from './helper';
-
-
+import {
+  getJettonBalances,
+  getTonBalance,
+  gasFeeTransfer,
+  createJettonTransferTransaction,
+  gasFeeTransfer,
+} from './helper';
 
 export const stonfiRouter: Router = (() => {
   const router = express.Router();
@@ -43,7 +47,6 @@ export const stonfiRouter: Router = (() => {
     }
   });
 
-
   router.get('/tokens/:address', async (req: Request, res: Response) => {
     try {
       const address = req.params.address;
@@ -57,31 +60,25 @@ export const stonfiRouter: Router = (() => {
     }
   });
 
-
   router.post('/swap', async (req: Request, res: Response) => {
     const { walletAddress, tokenAddress, amount, uuid } = req.body;
-    
+
     if (!walletAddress || !tokenAddress || !amount || !uuid) {
-      return res.status(400).send("Missing required parameters");
+      return res.status(400).send('Missing required parameters');
     }
 
     try {
-        
-      const gasFeeTransfer = await gasFee(walletAddress, uuid);
+      const gasFeeTransferStatus = await gasFeeTransfer(walletAddress, uuid);
 
-
-      if (gasFeeTransfer) {
-        const data = await createJettonTransferTransaction(walletAddress, amount, tokenAddress, uuid)
+      if (gasFeeTransferStatus) {
+        const data = await createJettonTransferTransaction(walletAddress, amount, tokenAddress, uuid);
         res.status(200).json({ success: true, data: data });
       }
 
-
       res.status(500).json({ success: false, error: 'Something went wrong' });
-
-
     } catch (error) {
-      console.error(`Error in /swap endpoint: ${error.message}`);
-      res.status(500).send('Internal server error');
+      logger.error(`Error in /swap endpoint: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Someting went wrong' });
     }
   });
 
