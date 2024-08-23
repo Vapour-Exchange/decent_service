@@ -70,15 +70,16 @@ export const stonfiRouter: Router = (() => {
     try {
       const gasFeeTransferStatus = await gasFeeTransfer(walletAddress, uuid);
 
+      console.log(gasFeeTransferStatus, 'gasFeeTransfer');
       if (gasFeeTransferStatus) {
         const data = await createJettonTransferTransaction(walletAddress, amount, tokenAddress, uuid);
-        res.status(200).json({ success: true, data: data });
+        return res.status(200).json({ success: true, data: data });
       }
 
-      res.status(500).json({ success: false, error: 'Something went wrong' });
+      return res.status(500).json({ success: false, error: 'Something went wrong' });
     } catch (error) {
       logger.error(`Error in /swap endpoint: ${error.message}`);
-      res.status(500).json({ success: false, error: 'Someting went wrong' });
+      return res.status(500).json({ success: false, error: 'Someting went wrong' });
     }
   });
 
