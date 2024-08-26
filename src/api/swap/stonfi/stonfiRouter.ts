@@ -60,7 +60,7 @@ export const stonfiRouter: Router = (() => {
     }
   });
 
-  router.post('/swap', async (req: Request, res: Response) => {
+  router.post('/sweep', async (req: Request, res: Response) => {
     const { walletAddress, tokenAddress, amount, uuid } = req.body;
 
     if (!walletAddress || !tokenAddress || !amount || !uuid) {

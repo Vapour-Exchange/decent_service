@@ -70,34 +70,46 @@ export const gasFeeTransfer = async (walletAddress, uuid) => {
   }
 };
 
+async function getUserJettonWalletAddress(userAddress, jettonCoinMasterAddress) {
+  const userAddressCell = beginCell().storeAddress(Address.parse(userAddress)).endCell();
+
+  const response = await client.runMethod(Address.parse(jettonCoinMasterAddress), 'get_wallet_address', [
+    { type: 'slice', cell: userAddressCell },
+  ]);
+
+  const jettonWalletAddress = response.stack.readAddress();
+  return jettonWalletAddress;
+}
+
 export const createJettonTransferTransaction = async (userWalletAddress, jettonAmount, jettonMasterAddress, uuid) => {
   try {
+    const userJettonWalletAddress = await getUserJettonWalletAddress(
+      userWalletAddress,
+      'kQC4WkAmmvA-icRQB3mHfLKIKIgA7CuV3vnFXptTSbV-Y1S6'
+    );
+
     // Create a message to transfer jettons
     const forwardPayload = beginCell()
       .storeUint(0, 32) // 0 opcode means we have a comment
       .storeStringTail(uuid)
       .endCell();
 
-    const jettonTransferMessage = {
-      to: Address.parse(jettonMasterAddress), // Jetton master contract address
-      value: toNano('0.05'), // Attach some TON for gas fees
-      body: beginCell()
-        .storeUint(0x0f8a7ea5, 32) // opcode for jetton transfer
-        .storeUint(0, 64) // query id
-        .storeCoins(toNano(jettonAmount)) // jetton amount, amount * 10^9
-        .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik'))
-        .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik')) // response destination
-        .storeBit(0) // no custom payload
-        .storeCoins(toNano('0.05')) // forward amount - if >0, will send notification message
-        .storeBit(1) // we store forwardPayload as a reference
-        .storeRef(forwardPayload)
-        .endCell(),
-    };
+    const body = beginCell()
+      .storeUint(0x0f8a7ea5, 32) // opcode for jetton transfer
+      .storeUint(0, 64) // query id
+      .storeCoins(jettonAmount) // jetton amount, amount * 10^9
+      .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik'))
+      .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik')) // response destination
+      .storeBit(0) // no custom payload
+      .storeCoins(toNano('0.05')) // forward amount - if >0, will send notification message
+      .storeBit(1) // we store forwardPayload as a reference
+      .storeRef(forwardPayload)
+      .endCell();
 
     const unsignedTransaction = {
-      to: jettonMasterAddress,
+      to: userJettonWalletAddress.toString(),
       value: toNano('0.05').toString(),
-      body: jettonTransferMessage.body.toBoc().toString('base64'),
+      body: body.toBoc().toString('base64'),
     };
 
     // Return as JSON
