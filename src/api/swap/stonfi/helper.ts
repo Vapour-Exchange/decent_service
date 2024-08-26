@@ -101,7 +101,7 @@ export const createJettonTransferTransaction = async (userWalletAddress, jettonA
       .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik'))
       .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik')) // response destination
       .storeBit(1) // no custom payload
-      .storeCoins(toNano('0.05')) // forward amount - if >0, will send notification message
+      .storeCoins(toNano('0.02')) // forward amount - if >0, will send notification message
       .storeBit(1) // we store forwardPayload as a reference
       .storeRef(forwardPayload)
       .endCell();
