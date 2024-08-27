@@ -53,6 +53,7 @@
     "pino-http": "^10.0.0",
     "redis": "^4.6.15",
     "swagger-ui-express": "^5.0.0",
+    "tonweb": "^0.0.66",
     "winston": "^3.13.0",
     "winston-newrelic-agent-transport": "^1.0.5",
     "zod": "^3.22.4"
