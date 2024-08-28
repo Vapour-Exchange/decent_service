@@ -4,13 +4,13 @@ import { Address, toNano, SendMode, beginCell } from '@ton/core';
 import { mnemonicToPrivateKey } from '@ton/crypto';
 
 const client = new TonClient({
-  endpoint: 'https://testnet.toncenter.com/api/v2/jsonRPC',
+  endpoint: 'https://toncenter.com/api/v2/jsonRPC',
   apiKey: process.env.TONAPI_KEY,
 });
 
 export async function getJettonBalances(address: any) {
   try {
-    const response = await axios.get(`https://testnet.tonapi.io/v2/accounts/${address}/jettons`);
+    const response = await axios.get(`https://tonapi.io/v2/accounts/${address}/jettons`);
     return response.data.balances;
   } catch (error) {
     console.error(`Failed to fetch jetton balances: ${error.message}`);
