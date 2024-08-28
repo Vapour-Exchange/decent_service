@@ -34,7 +34,7 @@ export const stonfiRouter: Router = (() => {
         data: {
           price: Number(response.data.swap_rate).toFixed(10),
           min: 1,
-          network_fees: config.networkFees,
+          network_fees: 0.7,
           platform_fees: config.platformFees,
           slippage: 0.5,
         },
