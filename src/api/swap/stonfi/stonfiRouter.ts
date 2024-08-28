@@ -95,6 +95,7 @@ export const stonfiRouter: Router = (() => {
     const { transactions } = req.body;
 
     const poolWallet = 'UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik';
+
     if (!transactions || !Array.isArray(transactions)) {
       return res.status(400).json({ success: false, message: 'Missing or invalid required parameters' });
     }

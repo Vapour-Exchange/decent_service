@@ -84,7 +84,10 @@ async function getUserJettonWalletAddress(userAddress, jettonCoinMasterAddress) 
 
 export const createJettonTransferTransaction = async (userWalletAddress, jettonAmount, jettonAddress, uuid) => {
   try {
-    const userJettonWalletAddress = await getUserJettonWalletAddress(userWalletAddress, jettonAddress);
+    const userJettonWalletAddress = await getUserJettonWalletAddress(
+      userWalletAddress,
+      'kQC4WkAmmvA-icRQB3mHfLKIKIgA7CuV3vnFXptTSbV-Y1S6'
+    );
 
     // Create a message to transfer jettons
     const forwardPayload = beginCell()
