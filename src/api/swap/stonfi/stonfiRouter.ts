@@ -6,7 +6,7 @@ import config from '@/config';
 import { getJettonBalances, getTonBalance, gasFeeTransfer, createJettonTransferTransaction } from './helper';
 import TonWeb from 'tonweb';
 
-const tonweb = new TonWeb(new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC'));
+const tonweb = new TonWeb(new TonWeb.HttpProvider('https://testnet.toncenter.com/api/v2/jsonRPC'));
 
 const currencyAPI = 'https://api.exchangerate-api.com/v4/latest/USD';
 
@@ -61,7 +61,7 @@ export const stonfiRouter: Router = (() => {
       if (!address) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
       }
-      const response = await axios.get(`https://tonapi.io/v2/accounts/${address}/jettons`);
+      const response = await axios.get(`https://testnet.tonapi.io/v2/accounts/${address}/jettons`);
       res.status(200).json({ success: true, data: response.data.balances });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
@@ -92,49 +92,47 @@ export const stonfiRouter: Router = (() => {
   });
 
   router.post('/transactions', async (req: Request, res: Response) => {
-    const { address } = req.body;
+    const { transactions } = req.body;
 
-    if (!address) {
-      return res.status(400).send('Missing required parameters');
+    const poolWallet = 'UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik';
+    if (!transactions || !Array.isArray(transactions)) {
+      return res.status(400).json({ success: false, message: 'Missing or invalid required parameters' });
     }
-    const responseData = [];
+
     try {
-      for (let j = 0; j < address.length; j++) {
-        const transactions = await tonweb.provider.getTransactions(address[j].address, 10);
-        for (let i = 0; i < transactions?.length; i++) {
-          const transaction = transactions[i];
+      const responseData = (
+        await Promise.all(
+          transactions.map(async (addrObj) => {
+            try {
+              const userTransactions = await tonweb.provider.getTransactions(addrObj.address, 30);
+              return userTransactions
+                ?.map((transaction) => {
+                  const inMessage = transaction?.in_msg.message;
+                  const outMessages = transaction?.out_msgs?.[0];
 
-          const inMessage = transaction?.in_msg.message;
-          const outMessages = transaction?.out_msgs || [];
+                  if (outMessages && atob(outMessages?.msg_data?.text ?? '') === addrObj.uuid) {
+                    return {
+                      uuid: addrObj.uuid,
+                      success: !!inMessage,
+                    };
+                  }
+                  return null; // Return null if conditions are not met
+                })
+                .filter((item) => item !== null); // Filter out null values
+            } catch (err) {
+              console.log(`Error processing address ${addrObj.address}: ${err.message}`);
+              return []; // Return an empty array on error to avoid nulls in the final array
+            }
+          })
+        )
+      ).flat();
+      const flattenedResponseData = responseData.flat().filter((item) => item !== null);
 
-          // Ensure the inMessage exists and contains the expected data
-          if (inMessage) {
-            responseData.push({
-              uuid: address[j].uuid,
-              success: true,
-              tokenAddress: transaction.address.account_address, // Token contract address
-              walletAddress: transaction.in_msg.source && Address.parse(transaction.in_msg.source).toString(), // Incoming wallet address
-              outgoingAddresses:
-                transaction.in_msg.destination && Address.parse(transaction.in_msg.destination).toString(), // Array of outgoing wallet addresses
-              amount: transaction.in_msg.value, // Amount in nanoTONs
-              decodeBody: inMessage,
-            });
-          } else {
-            // console.log(`No matching UUID found in transaction.`);
-            responseData.push({
-              uuid: address[j].uuid,
-              success: false,
-            });
-          }
-        }
-      }
-
-      return res.status(200).json({ success: true, data: responseData });
+      return res.status(200).json({ success: true, data: flattenedResponseData });
     } catch (error) {
       console.error(`Error in /transactions endpoint: ${error.message}`);
-      return res.status(500).json({ success: false, data: [] });
+      return res.status(500).json({ success: false, message: 'Someting went wrong' });
     }
   });
-
   return router;
 })();
