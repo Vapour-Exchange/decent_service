@@ -2,6 +2,7 @@ import axios from 'axios';
 import { WalletContractV4, internal, TonClient } from '@ton/ton';
 import { Address, toNano, SendMode, beginCell } from '@ton/core';
 import { mnemonicToPrivateKey } from '@ton/crypto';
+import TonWeb from 'tonweb';
 
 const client = new TonClient({
   endpoint: 'https://toncenter.com/api/v2/jsonRPC',
@@ -81,12 +82,9 @@ async function getUserJettonWalletAddress(userAddress, jettonCoinMasterAddress) 
   return jettonWalletAddress;
 }
 
-export const createJettonTransferTransaction = async (userWalletAddress, jettonAmount, jettonMasterAddress, uuid) => {
+export const createJettonTransferTransaction = async (userWalletAddress, jettonAmount, jettonAddress, uuid) => {
   try {
-    const userJettonWalletAddress = await getUserJettonWalletAddress(
-      userWalletAddress,
-      'kQC4WkAmmvA-icRQB3mHfLKIKIgA7CuV3vnFXptTSbV-Y1S6'
-    );
+    const userJettonWalletAddress = await getUserJettonWalletAddress(userWalletAddress, jettonAddress);
 
     // Create a message to transfer jettons
     const forwardPayload = beginCell()
@@ -100,8 +98,8 @@ export const createJettonTransferTransaction = async (userWalletAddress, jettonA
       .storeCoins(jettonAmount) // jetton amount, amount * 10^9
       .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik'))
       .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik')) // response destination
-      .storeBit(1) // no custom payload
-      .storeCoins(toNano('0.05')) // forward amount - if >0, will send notification message
+      .storeBit(0) // no custom payload
+      .storeCoins(toNano('0.02')) // forward amount - if >0, will send notification message
       .storeBit(1) // we store forwardPayload as a reference
       .storeRef(forwardPayload)
       .endCell();
