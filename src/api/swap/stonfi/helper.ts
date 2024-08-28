@@ -2,11 +2,14 @@ import axios from 'axios';
 import { WalletContractV4, internal, TonClient } from '@ton/ton';
 import { Address, toNano, SendMode, beginCell } from '@ton/core';
 import { mnemonicToPrivateKey } from '@ton/crypto';
+import TonWeb from 'tonweb';
 
 const client = new TonClient({
   endpoint: 'https://testnet.toncenter.com/api/v2/jsonRPC',
   apiKey: process.env.TONAPI_KEY,
 });
+
+const tonweb = new TonWeb(new TonWeb.HttpProvider('https://testnet.toncenter.com/api/v2/jsonRPC'));
 
 export async function getJettonBalances(address: any) {
   try {
@@ -81,12 +84,21 @@ async function getUserJettonWalletAddress(userAddress, jettonCoinMasterAddress) 
   return jettonWalletAddress;
 }
 
-export const createJettonTransferTransaction = async (userWalletAddress, jettonAmount, jettonMasterAddress, uuid) => {
+const getJettonMasterAddress = async (jettonAddress) => {
   try {
-    const userJettonWalletAddress = await getUserJettonWalletAddress(
-      userWalletAddress,
-      'kQC4WkAmmvA-icRQB3mHfLKIKIgA7CuV3vnFXptTSbV-Y1S6'
-    );
+    const response = await axios.get(`https://testnet.tonapi.io/v2/jettons/${jettonAddress}`);
+    return response.data.admin.address;
+  } catch (error) {
+    console.error(`Failed to fetch jetton balances: ${error.message}`);
+    throw new Error('Error fetching jetton balances');
+  }
+};
+
+export const createJettonTransferTransaction = async (userWalletAddress, jettonAmount, jettonAddress, uuid) => {
+  try {
+    const jettonMasterAddress = await getJettonMasterAddress(jettonAddress);
+
+    const userJettonWalletAddress = await getUserJettonWalletAddress(userWalletAddress, jettonMasterAddress);
 
     // Create a message to transfer jettons
     const forwardPayload = beginCell()
