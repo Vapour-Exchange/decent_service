@@ -32,7 +32,7 @@ export const stonfiRouter: Router = (() => {
       res.status(200).json({
         success: true,
         data: {
-          price: response.data.swap_rate.toFixed(10),
+          price: Number(response.data.swap_rate).toFixed(10),
           min: 1,
           network_fees: config.networkFees,
           platform_fees: config.platformFees,
