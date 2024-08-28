@@ -86,7 +86,8 @@ async function getUserJettonWalletAddress(userAddress, jettonCoinMasterAddress) 
 
 const getJettonMasterAddress = async (jettonAddress) => {
   try {
-    const response = await axios.get(`https://testnet.tonapi.io/v2/jettons/${jettonAddress}`);
+    const address = Address.parse(jettonAddress).toRawString();
+    const response = await axios.get(`https://testnet.tonapi.io/v2/jettons/${address}`);
     return response.data.admin.address;
   } catch (error) {
     console.error(`Failed to fetch jetton balances: ${error.message}`);
@@ -96,9 +97,7 @@ const getJettonMasterAddress = async (jettonAddress) => {
 
 export const createJettonTransferTransaction = async (userWalletAddress, jettonAmount, jettonAddress, uuid) => {
   try {
-    const jettonMasterAddress = await getJettonMasterAddress(jettonAddress);
-
-    const userJettonWalletAddress = await getUserJettonWalletAddress(userWalletAddress, jettonMasterAddress);
+    const userJettonWalletAddress = await getUserJettonWalletAddress(userWalletAddress, jettonAddress);
 
     // Create a message to transfer jettons
     const forwardPayload = beginCell()

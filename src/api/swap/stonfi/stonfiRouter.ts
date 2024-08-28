@@ -3,20 +3,10 @@ import express, { Request, Response, Router } from 'express';
 import { TonClient, Address, address } from '@ton/ton';
 import logger from '@/logger';
 import config from '@/config';
-import {
-  getJettonBalances,
-  getTonBalance,
-  gasFeeTransfer,
-  createJettonTransferTransaction,
-  gasFeeTransfer,
-} from './helper';
+import { getJettonBalances, getTonBalance, gasFeeTransfer, createJettonTransferTransaction } from './helper';
 import TonWeb from 'tonweb';
 
-
-const tonweb = new TonWeb(
-  new TonWeb.HttpProvider("https://testnet.toncenter.com/api/v2/jsonRPC")
-);
-
+const tonweb = new TonWeb(new TonWeb.HttpProvider('https://testnet.toncenter.com/api/v2/jsonRPC'));
 
 export const stonfiRouter: Router = (() => {
   const router = express.Router();
@@ -90,41 +80,37 @@ export const stonfiRouter: Router = (() => {
     }
   });
 
-
   router.post('/transactions', async (req: Request, res: Response) => {
-    const { address} = req.body;
-    
+    const { address } = req.body;
+
     if (!address) {
       return res.status(400).send('Missing required parameters');
     }
-    const responseData=[]
+    const responseData = [];
     try {
-      for (let j = 0 ; j<address.length ; j++){
+      for (let j = 0; j < address.length; j++) {
         const transactions = await tonweb.provider.getTransactions(address[j].address, 10);
         for (let i = 0; i < transactions?.length; i++) {
           const transaction = transactions[i];
-          if (transaction.in_msg && transaction.in_msg.message===address[j].uuid) {
-              responseData.push({
-                uuid:address[j].uuid,
-                success:true,
-              })
-          }
-          else{
+          if (transaction.in_msg && transaction.in_msg.message === address[j].uuid) {
             responseData.push({
-              uuid:address[j].uuid,
-              success:false,
-            })
+              uuid: address[j].uuid,
+              success: true,
+            });
+          } else {
+            responseData.push({
+              uuid: address[j].uuid,
+              success: false,
+            });
           }
         }
-  
       }
-      return res.status(200).json({ success: true, data:responseData });
+      return res.status(200).json({ success: true, data: responseData });
     } catch (error) {
       logger.error(`Error in /transaction endpoint: ${error.message}`);
       return res.status(500).json({ success: false, error: 'Someting went wrong' });
     }
   });
-
 
   return router;
 })();
