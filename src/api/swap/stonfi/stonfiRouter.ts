@@ -6,7 +6,7 @@ import config from '@/config';
 import { getJettonBalances, getTonBalance, gasFeeTransfer, createJettonTransferTransaction } from './helper';
 import TonWeb from 'tonweb';
 
-const tonweb = new TonWeb(new TonWeb.HttpProvider('https://testnet.toncenter.com/api/v2/jsonRPC'));
+const tonweb = new TonWeb(new TonWeb.HttpProvider('https://toncenter.com/api/v2/jsonRPC'));
 
 const currencyAPI = 'https://api.exchangerate-api.com/v4/latest/USD';
 
@@ -61,7 +61,7 @@ export const stonfiRouter: Router = (() => {
       if (!address) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
       }
-      const response = await axios.get(`https://testnet.tonapi.io/v2/accounts/${address}/jettons`);
+      const response = await axios.get(`https://tonapi.io/v2/accounts/${address}/jettons`);
       res.status(200).json({ success: true, data: response.data.balances });
     } catch (error) {
       res.status(500).json({ success: false, error: error.message });
