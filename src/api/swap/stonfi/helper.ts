@@ -99,8 +99,8 @@ export const createJettonTransferTransaction = async (userWalletAddress, jettonA
       .storeUint(0x0f8a7ea5, 32) // opcode for jetton transfer
       .storeUint(0, 64) // query id
       .storeCoins(jettonAmount) // jetton amount, amount * 10^9
-      .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik'))
-      .storeAddress(Address.parse('UQDkkpOBxvbbaTtQUTT25fTR39pqXFtA3BNH5Z7e7Twrc_ik')) // response destination
+      .storeAddress(Address.parse('UQAPo3vlsP2qVJ5_m1hT0NPoxHS10ACL-vT1wsItvLZQIXzD'))
+      .storeAddress(Address.parse('UQAPo3vlsP2qVJ5_m1hT0NPoxHS10ACL-vT1wsItvLZQIXzD')) // response destination
       .storeBit(0) // no custom payload
       .storeCoins(toNano('0.02')) // forward amount - if >0, will send notification message
       .storeBit(1) // we store forwardPayload as a reference
