@@ -109,7 +109,7 @@ export const createJettonTransferTransaction = async (userWalletAddress, jettonA
 
     const unsignedTransaction = {
       to: userJettonWalletAddress.toString(),
-      value: toNano('0.05').toString(),
+      value: jettonAmount,
       body: body.toBoc().toString('base64'),
     };
 
