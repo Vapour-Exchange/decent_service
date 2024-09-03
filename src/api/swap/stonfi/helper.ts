@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { WalletContractV4, internal, TonClient } from '@ton/ton';
+import { WalletContractV4, internal, TonClient, WalletContractV5R1 } from '@ton/ton';
 import { Address, toNano, SendMode, beginCell } from '@ton/core';
 import { mnemonicToPrivateKey } from '@ton/crypto';
 import TonWeb from 'tonweb';
@@ -31,17 +31,20 @@ export const gasFeeTransfer = async (walletAddress, uuid) => {
     const keyPair = await mnemonicToPrivateKey(mnemonic.split(' '));
     const workChain = 0;
 
-    const wallet = WalletContractV4.create({
-      workchain: workChain,
+    const wallet = WalletContractV5R1.create({
+      workChain: workChain,
       publicKey: keyPair.publicKey,
     });
 
+    console.log(wallet);
     const contract = client.open(wallet);
     const seqno = await contract.getSeqno();
 
+    console.log('\n\n\n\n\n' + (await contract.getBalance()) + '\n\n\n');
     const params = {
       seqno,
       secretKey: keyPair.secretKey,
+      sendMode: SendMode.PAY_GAS_SEPARATELY,
       messages: [
         internal({
           to: walletAddress,
